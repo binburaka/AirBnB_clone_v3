@@ -1,45 +1,27 @@
 #!/usr/bin/python3
-"""
-app
-"""
-
-from flask import Flask, jsonify
-from flask_cors import CORS
-from os import getenv
-
-from api.v1.views import app_views
+"""RESTful API for Airbnb Clone"""
 from models import storage
-
-
+from api.v1.views import app_views
+from flask import Flask, Blueprint, jsonify, make_response
+from os import getenv
+from flask_cors import CORS
 app = Flask(__name__)
-
-CORS(app, resources={r"/*": {"origins": "0.0.0.0"}})
-
+cors = CORS(app, resources={r"/*": {"origins": "0.0.0.0"}})
 app.register_blueprint(app_views)
 
 
 @app.teardown_appcontext
-def teardown(exception):
-    """
-    teardown function
-    """
+def _storage(self):
+    """method to handle @app.teardown_appcontext that calls storage.close()"""
     storage.close()
 
 
 @app.errorhandler(404)
-def handle_404(exception):
-    """
-    handles 404 error
-    :return: returns 404 json
-    """
-    data = {
-        "error": "Not found"
-    }
+def not_found(error):
+    """handler for 404 errors that returns a JSON-formatted 404
+    status code response."""
+    return jsonify({'error': 'Not found'}), 404
 
-    resp = jsonify(data)
-    resp.status_code = 404
-
-    return(resp)
-
-if __name__ == "__main__":
-    app.run(getenv("HBNB_API_HOST"), getenv("HBNB_API_PORT"))
+if __name__ == '__main__':
+    app.run(host=getenv('HBNB_API_HOST', '0.0.0.0'),
+            port=getenv('HBNB_API_PORT', '5000'), threaded=True)
