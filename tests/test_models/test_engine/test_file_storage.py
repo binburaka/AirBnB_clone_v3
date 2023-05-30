@@ -2,7 +2,6 @@
 """
 Contains the TestFileStorageDocs classes
 """
-
 from datetime import datetime
 import inspect
 import models
@@ -114,23 +113,30 @@ class TestFileStorage(unittest.TestCase):
             js = f.read()
         self.assertEqual(json.loads(string), json.loads(js))
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing db storage")
     def test_get(self):
-        """Test that get is returning the object based on it's class and id"""
-        self.assertNotEqual(models.storage.get('Land', '20'), int)
-        new_st = State(name='New York')
-        models.storage.new(new_st)
+        """Test that checks if get function works with filestorage"""
+        obj1 = State(**{'name': 'California'})
+        models.storage.new(obj1)
         models.storage.save()
-        self.assertEqual(models.storage.get(State, new_st.id).id, new_st.id)
+        obj2 = models.storage.get('State', obj1.id)
+        self.assertEqual(obj1.name, obj2.name)
+        self.assertIs(obj1.id, obj2.id)
 
-    @unittest.skipIf(models.storage_t == 'db', "not testing db storage")
-    def test_count(self):
-        """Test that count is returning the number of objects in storage
-        based on it's class and id"""
-        self.assertIs(type(models.storage.count()), int)
-        actual = models.storage.count(State)
-        new_st = State(name='New York')
-        models.storage.new(new_st)
+    def test_get_fail(self):
+        """Test that checks if get function fails with filestorage"""
+        obj1 = State(**{'name': 'California'})
+        models.storage.new(obj1)
         models.storage.save()
-        after = models.storage.count(State)
-        self.assertNotEqual(actual, after)
+        obj2 = models.storage.get('state', obj1.id)
+        self.assertIs(obj2, None)
+
+    def test_count(self):
+        """Test that checks if count function works with filestorage"""
+        first_count = models.storage.count('State')
+        obj1 = State(**{'name': 'California'})
+        models.storage.new(obj1)
+        models.storage.save()
+        second_count = models.storage.count('State')
+        self.assertEqual(second_count - first_count, 1)
+        third_count = models.storage.count('state')
+        self.assertIs(third_count, 0)

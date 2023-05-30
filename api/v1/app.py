@@ -1,35 +1,36 @@
 #!/usr/bin/python3
-'''
-    app for registering blueprint and starting flask
-'''
-from flask import Flask, make_response, jsonify
-from flask_cors import CORS
+"""Module"""
+from flask import Flask, jsonify
 from models import storage
+import os
 from api.v1.views import app_views
-from os import getenv
-
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, origins="0.0.0.0")
+cors = CORS(app, resources={r"/*": {"origins": "0.0.0.0"}})
 app.register_blueprint(app_views)
 
-
-@app.teardown_appcontext
-def tear_down(self):
-    '''
-    close query after each session
-    '''
-    storage.close()
+app.config["JSONIFY_PRETTYPRINT_REGULAR"] = True
 
 
 @app.errorhandler(404)
-def not_found(error):
-    '''
-    return JSON formatted 404 status code response
-    '''
-    return make_response(jsonify({'error': 'Not found'}), 404)
+def page_not_found(error):
+    """A function to handle page not found"""
+    return jsonify({"error": "Not found"}), 404
 
 
-if __name__ == "__main__":
-    app.run(host=getenv("HBNB_API_HOST", "0.0.0.0"),
-            port=int(getenv("HBNB_API_PORT", "5000")), threaded=True)
+@app.teardown_appcontext
+def teardown_db(self):
+    """Registers a function to be called when the application context ends."""
+    storage.close()
+
+if __name__ == '__main__':
+    if os.getenv('HBNB_API_HOST'):
+        bnb_host = os.getenv('HBNB_API_HOST')
+    else:
+        bnb_host = '0.0.0.0'
+    if os.getenv('HBNB_API_PORT'):
+        bnb_port = int(os.getenv('HBNB_API_PORT'))
+    else:
+        bnb_port = 5000
+    app.run(host=bnb_host, port=bnb_port, threaded=True)
